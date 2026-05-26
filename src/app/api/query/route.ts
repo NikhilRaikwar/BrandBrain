@@ -42,18 +42,36 @@ export async function POST(request: Request) {
       }
     }
 
-    const search = question.replace(/[%_,]/g, "\\$&");
     const { data: cards } = await admin
       .from("knowledge_cards")
       .select("*")
       .eq("brain_id", resolvedBrainId)
-      .or(`concept.ilike.%${search}%,summary.ilike.%${search}%,client_name.ilike.%${search}%`)
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(25);
 
-    const matchingCards = (cards ?? []).filter((card) =>
-      JSON.stringify(card.tags ?? []).toLowerCase().includes(question.toLowerCase())
+    const tokens = Array.from(
+      new Set(
+        (question.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter(
+          (token) => token.length > 2 && !["what", "when", "where", "why", "how", "the", "and", "for", "with", "this", "that", "from", "into", "about", "your", "what's", "whats", "is", "are", "was", "were"].includes(token)
+        )
+      )
     );
+
+    const matchingCards =
+      cards?.filter((card) => {
+        const haystack = [
+          card.concept,
+          card.summary,
+          card.client_name,
+          ...(card.tags ?? []),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return tokens.length === 0
+          ? true
+          : tokens.some((token) => haystack.includes(token));
+      }) ?? [];
+
     const usableCards = matchingCards.length > 0 ? matchingCards : cards ?? [];
     const context = buildKnowledgeContext(usableCards);
     const sourceIds = Array.from(

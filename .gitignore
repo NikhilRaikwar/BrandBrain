@@ -1,5 +1,7 @@
 .next/
 node_modules/
 .env.local
+.env
+.playwright-mcp/
 .DS_Store
 *.log
