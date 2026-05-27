@@ -1,24 +1,25 @@
-# BrandBrain — AGENTS.md
+# BrandBrain - AGENTS.md
 
 ## Project
 BrandBrain: living Company Brain for marketing agencies.
 Three layers: Knowledge (ingest), Judgment (Ogilvy score), Skills (reusable frameworks).
 
-## Rules — always follow
+## Rules - always follow
 - Query knowledge_cards before generating any copy or answer
 - Always show source citations with query answers
 - Always pull client's past campaigns before scoring copy
 - Log every query and score to database with token costs
-- Never import openai on client side — server routes only
+- Never import openai on client side - server routes only
 - Never expose SUPABASE_SERVICE_ROLE_KEY to browser
-- All money values stored as USD float, displayed as INR (×83)
+- All money values stored as USD float, displayed as INR (x83)
 - Score ring color: red <50, orange 50-74, green 75+
 
-## Rules — never do
+## Rules - never do
 - Never modify raw_sources after initial insert
 - Never delete knowledge_cards without user confirmation
 - Never score copy without first fetching client history
 - Never hardcode API keys anywhere
+- Never commit or sync the `assets/` folder; it is local working material only
 
 ## Cost constants (src/lib/pricing.ts)
 INPUT_COST_PER_M_TOKENS = 0.15   // USD per million
