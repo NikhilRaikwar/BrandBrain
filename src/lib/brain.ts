@@ -26,10 +26,35 @@ export async function getUserBrain(userId: string) {
   return data?.[0] ?? null;
 }
 
+export async function getUserBrains(userId: string) {
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("brains")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
 export async function getUserBrainIds(userId: string) {
   const admin = createSupabaseAdminClient();
   const { data } = await admin.from("brains").select("id").eq("user_id", userId);
   return data?.map((row) => row.id) ?? [];
+}
+
+export async function createUserBrain(userId: string) {
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("brains")
+    .insert({ user_id: userId, name: "My Agency Brain" })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "Failed to create brain");
+  }
+
+  return data;
 }
 
 export async function getBrainByToken(token: string) {

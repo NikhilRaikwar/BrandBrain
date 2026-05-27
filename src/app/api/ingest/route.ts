@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { getCurrentUser, getUserBrainIds } from "@/lib/brain";
+import { createUserBrain, getCurrentUser, getUserBrainIds } from "@/lib/brain";
 import { estimateCostUsd } from "@/lib/pricing";
 import { getOpenAI } from "@/lib/openai";
 
@@ -21,13 +21,13 @@ function parseConcepts(content: string) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const brainId = String(body.brainId ?? "");
+    const brainId = body.brainId ? String(body.brainId) : "";
     const sourceType = String(body.sourceType ?? "");
     const clientName = String(body.clientName ?? "").trim();
     const title = String(body.title ?? "").trim();
     const content = String(body.content ?? "").trim();
 
-    if (!brainId || !sourceType || !clientName || !title || !content) {
+    if (!sourceType || !clientName || !title || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -41,15 +41,20 @@ export async function POST(request: Request) {
     }
 
     const validBrainIds = await getUserBrainIds(user.id);
-    if (!validBrainIds.includes(brainId)) {
-      return NextResponse.json({ error: "Brain not found" }, { status: 404 });
+    let resolvedBrainId = validBrainIds.includes(brainId) ? brainId : validBrainIds[0] ?? "";
+    let createdBrain = false;
+
+    if (!resolvedBrainId) {
+      const brain = await createUserBrain(user.id);
+      resolvedBrainId = brain.id;
+      createdBrain = true;
     }
 
     const admin = createSupabaseAdminClient();
     const { data: sourceRow, error: sourceError } = await admin
       .from("raw_sources")
       .insert({
-        brain_id: brainId,
+        brain_id: resolvedBrainId,
         title,
         content,
         source_type: sourceType,
@@ -84,7 +89,7 @@ export async function POST(request: Request) {
     if (concepts.length > 0) {
       await admin.from("knowledge_cards").insert(
         concepts.map((concept) => ({
-          brain_id: brainId,
+          brain_id: resolvedBrainId,
           source_id: sourceRow.id,
           concept: concept.concept,
           summary: concept.summary,
@@ -97,7 +102,7 @@ export async function POST(request: Request) {
     const { data: brainRow } = await admin
       .from("brains")
       .select("docs_ingested, concepts_extracted")
-      .eq("id", brainId)
+      .eq("id", resolvedBrainId)
       .maybeSingle();
 
     await admin
@@ -106,11 +111,13 @@ export async function POST(request: Request) {
         docs_ingested: (brainRow?.docs_ingested ?? 0) + 1,
         concepts_extracted: (brainRow?.concepts_extracted ?? 0) + concepts.length,
       })
-      .eq("id", brainId);
+      .eq("id", resolvedBrainId);
 
     const costUsd = estimateCostUsd(completion.usage?.prompt_tokens ?? 0, completion.usage?.completion_tokens ?? 0);
 
     return NextResponse.json({
+      brain_id: resolvedBrainId,
+      created_brain: createdBrain,
       concepts,
       count: concepts.length,
       cost_usd: costUsd,
