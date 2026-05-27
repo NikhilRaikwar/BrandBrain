@@ -15,7 +15,7 @@ export function PublicToggle({ brainId, value }: { brainId: string; value: boole
       toast.error(error.message);
       return;
     }
-    toast.success(nextValue ? "Brain is public" : "Brain is private");
+    toast.success(nextValue ? "Public access enabled" : "Public access disabled");
     router.refresh();
   };
 

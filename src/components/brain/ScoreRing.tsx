@@ -1,53 +1,45 @@
-"use client";
-
 import { cn } from "@/lib/utils";
-import {
-  RadialBar,
-  RadialBarChart,
-  ResponsiveContainer,
-  PolarAngleAxis,
-} from "recharts";
 
 type ScoreRingProps = {
-  score: number;
+  score: number | null;
   size?: number;
 };
 
-function ringColor(score: number) {
-  if (score < 50) return "#ef4444";
-  if (score < 75) return "#f97316";
-  return "#00e5a0";
+function ringColor(score: number | null) {
+  if (score === null) return "var(--green)";
+  if (score < 50) return "#c0391a";
+  if (score < 75) return "#d4541a";
+  return "#1a6b3c";
 }
 
-export function ScoreRing({ score, size = 120 }: ScoreRingProps) {
+export function ScoreRing({ score, size = 130 }: ScoreRingProps) {
   const color = ringColor(score);
+  const normalizedScore = score !== null ? Math.max(0, Math.min(score, 100)) : 0;
+  const circumference = 339.3;
+  const strokeDasharray = `${(normalizedScore / 100) * circumference} ${circumference}`;
 
   return (
     <div style={{ width: size, height: size }} className="relative">
-      <ResponsiveContainer width="100%" height="100%">
-        <RadialBarChart
-          cx="50%"
-          cy="50%"
-          innerRadius={`${62 - Math.min(size / 10, 10)}%`}
-          outerRadius="100%"
-          barSize={Math.max(8, Math.round(size / 14))}
-          data={[{ name: "score", value: score }]}
-          startAngle={90}
-          endAngle={-270}
-        >
-          <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-          <RadialBar dataKey="value" cornerRadius={999} fill={color} background />
-        </RadialBarChart>
-      </ResponsiveContainer>
+      <svg width={size} height={size} viewBox="0 0 130 130" className="block">
+        <circle cx="65" cy="65" r="54" fill="none" stroke="#ede8d8" strokeWidth="10" />
+        <circle
+          cx="65"
+          cy="65"
+          r="54"
+          fill="none"
+          stroke={color}
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={strokeDasharray}
+          style={{ transition: "stroke-dasharray 0.8s ease, stroke 0.3s ease" }}
+        />
+      </svg>
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <div
-            className={cn("font-display text-4xl font-bold leading-none")}
-            style={{ color }}
-          >
-            {Math.round(score)}
+          <div className={cn("font-display text-4xl font-bold leading-none")} style={{ color }}>
+            {score !== null ? Math.round(normalizedScore) : "—"}
           </div>
-          <div className="mt-1 text-[11px] text-[var(--muted)]">/100</div>
+          <div className="mt-1 text-[11px] text-[var(--ink4)]">/100</div>
         </div>
       </div>
     </div>

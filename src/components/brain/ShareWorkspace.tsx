@@ -2,8 +2,7 @@
 
 import { EditableField } from "./EditableField";
 import { PublicToggle } from "./PublicToggle";
-import { Button } from "@/components/ui/button";
-import { Copy, Linkedin } from "lucide-react";
+import { Copy, ExternalLink, Linkedin } from "lucide-react";
 import { toast } from "sonner";
 
 type ShareWorkspaceProps = {
@@ -21,85 +20,113 @@ type ShareWorkspaceProps = {
 
 export function ShareWorkspace({ brain }: ShareWorkspaceProps) {
   const shareUrl = `https://brandbrain.vercel.app/b/${brain.share_token}`;
+  const shareText = [
+    `I just shared my BrandBrain, "${brain.name}".`,
+    brain.description ? brain.description : "A living memory of how this agency thinks and creates.",
+    "",
+    `Explore it here: ${shareUrl}`,
+    "",
+    "Built with BrandBrain to turn campaign history into reusable creative memory.",
+  ].join("\n");
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(shareUrl);
-    toast.success("Link copied");
+    toast.success("Copied!");
+  };
+
+  const openShareUrl = () => {
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const shareLinkedIn = async () => {
+    await navigator.clipboard.writeText(shareText);
+    toast.success("LinkedIn post template copied.");
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
-      <section className="card card-purple">
-        <EditableField
-          brainId={brain.id}
-          field="name"
-          value={brain.name}
-          className="font-display text-4xl font-bold text-[var(--white)]"
-        />
-        <div className="mt-4">
+    <div className="mx-auto w-full max-w-[640px] space-y-4">
+      <section className="card card-top-purple">
+        <div className="mb-4">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink4)]">
+            Brain Name
+          </div>
+          <EditableField
+            brainId={brain.id}
+            field="name"
+            value={brain.name}
+            className="font-display text-[28px] font-bold text-[var(--ink)]"
+          />
+        </div>
+
+        <div className="mb-4">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink4)]">
+            Description
+          </div>
           <EditableField
             brainId={brain.id}
             field="description"
             value={brain.description ?? ""}
             multiline
-            className="text-sm text-[var(--muted)]"
+            className="text-[14px] leading-7 text-[var(--ink3)]"
           />
         </div>
 
-        <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-2xl border border-[var(--border)] bg-white/5 p-4">
-            <div className="text-2xl font-bold text-[var(--white)]">{brain.docs_ingested}</div>
-            <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[var(--muted)]">Docs</div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-[8px] bg-[var(--cream2)] p-3 text-center">
+            <div className="font-display text-[26px] text-[var(--ink)]">{brain.docs_ingested}</div>
+            <div className="mt-1 text-[11px] uppercase tracking-[0.08em] text-[var(--ink4)]">Docs</div>
           </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-white/5 p-4">
-            <div className="text-2xl font-bold text-[var(--white)]">{brain.concepts_extracted}</div>
-            <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[var(--muted)]">Concepts</div>
+          <div className="rounded-[8px] bg-[var(--cream2)] p-3 text-center">
+            <div className="font-display text-[26px] text-[var(--ink)]">{brain.concepts_extracted}</div>
+            <div className="mt-1 text-[11px] uppercase tracking-[0.08em] text-[var(--ink4)]">Concepts</div>
           </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-white/5 p-4">
-            <div className="text-2xl font-bold text-[var(--white)]">{brain.queries_answered}</div>
-            <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[var(--muted)]">Queries</div>
+          <div className="rounded-[8px] bg-[var(--cream2)] p-3 text-center">
+            <div className="font-display text-[26px] text-[var(--ink)]">{brain.queries_answered}</div>
+            <div className="mt-1 text-[11px] uppercase tracking-[0.08em] text-[var(--ink4)]">Queries</div>
           </div>
         </div>
 
-        <p className="mt-6 text-sm leading-7 text-[var(--muted)]">
+        <p className="mt-6 text-[14px] leading-7 text-[var(--ink3)]">
           A living memory of how this agency thinks and creates.
         </p>
       </section>
 
-      <section className="card card-green">
-        <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--muted)]">Share URL</div>
-        <div className="mt-3 break-all font-body text-sm text-[var(--white)]">{shareUrl}</div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Button type="button" variant="outline" onClick={copyLink}>
+      <section className="card card-top-green">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink4)]">
+          Public Share URL
+        </div>
+        <div className="share-url-box">{shareUrl}</div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={copyLink} className="btn btn-primary btn-sm">
             <Copy className="h-4 w-4" />
             Copy Link
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() =>
-              window.open(
-                `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-                "_blank",
-                "noopener,noreferrer"
-              )
-            }
-          >
+          </button>
+          <button type="button" onClick={openShareUrl} className="btn btn-outline btn-sm">
+            <ExternalLink className="h-4 w-4" />
+            Open in New Tab
+          </button>
+          <button type="button" onClick={shareLinkedIn} className="btn btn-outline btn-sm">
             <Linkedin className="h-4 w-4" />
             Share on LinkedIn
-          </Button>
+          </button>
         </div>
       </section>
 
-      <section className="card card-orange">
-        <div className="flex items-center justify-between gap-4">
+      <section className="card card-top-orange">
+        <div className="toggle-wrap">
           <div>
-            <div className="font-display text-2xl font-bold text-[var(--white)]">Public access</div>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              {brain.is_public ? "Anyone with the link can query this brain." : "Only you can access this brain."}
-            </p>
+            <div className="toggle-label">Public Access</div>
+            <div className="toggle-sub">Anyone with the link can query this brain.</div>
           </div>
           <PublicToggle brainId={brain.id} value={brain.is_public} />
+        </div>
+        <div className="border-t border-[var(--border2)] pt-4 text-[13px] leading-7 text-[var(--ink4)]">
+          When enabled, anyone with the link can query your brain. All data remains read-only for public users.
         </div>
       </section>
     </div>

@@ -69,8 +69,15 @@ export async function POST(request: Request) {
       .order("created_at", { ascending: false })
       .limit(5);
 
+    if (!cards || cards.length === 0) {
+      return NextResponse.json(
+        { error: "No past campaigns found for this client" },
+        { status: 404 }
+      );
+    }
+
     const context = buildKnowledgeContext(
-      (cards ?? []).map((card) => ({
+      cards.map((card) => ({
         concept: card.concept,
         summary: card.summary,
         client_name: card.client_name,

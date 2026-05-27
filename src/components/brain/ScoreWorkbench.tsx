@@ -1,11 +1,10 @@
 "use client";
 
-import { ScoreRing } from "./ScoreRing";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Copy, Save, Zap } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Copy, Save, Zap } from "lucide-react";
+import { ScoreRing } from "./ScoreRing";
 
 type BreakdownItem = {
   principle: string;
@@ -29,240 +28,268 @@ type ScoreResult = {
 };
 
 type ScoreWorkbenchProps = {
-  brainId: string;
+  brainId?: string | null;
   clientOptions: string[];
   agencyAverageScore: number;
+  hasBrain?: boolean;
 };
 
-export function ScoreWorkbench({ brainId, clientOptions, agencyAverageScore }: ScoreWorkbenchProps) {
+export function ScoreWorkbench({
+  brainId,
+  clientOptions,
+  agencyAverageScore,
+  hasBrain = true,
+}: ScoreWorkbenchProps) {
   const [clientName, setClientName] = useState(clientOptions[0] ?? "");
   const [copy, setCopy] = useState("");
   const [result, setResult] = useState<ScoreResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const canScore = clientOptions.length > 0 && clientName && copy.trim().length > 0;
-
-  const scoreCopy = async (content: string) => {
-    if (!clientName || !content.trim()) return;
-    setLoading(true);
-    setProgress(8);
-    const interval = window.setInterval(() => {
-      setProgress((current) => Math.min(current + 11, 92));
-    }, 250);
-
-    const response = await fetch("/api/score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ brainId, clientName, copy: content }),
-    });
-    const payload = await response.json();
-    window.clearInterval(interval);
-    setProgress(100);
-    setTimeout(() => setProgress(0), 700);
-    setLoading(false);
-
-    if (!response.ok) {
-      toast.error(payload.error ?? "Score failed");
-      return;
-    }
-
-    setResult(payload);
-    toast.success("Score complete");
-  };
-
-  const handleCopy = async () => {
-    if (!result?.rewrite) return;
-    await navigator.clipboard.writeText(result.rewrite);
-    toast.success("Copied to clipboard");
-  };
-
   const scoreRows = useMemo(
     () =>
       result?.breakdown ?? [
-        {
-          principle: "Product Positioning",
-          score: 0,
-          comment: "Run a score to see your breakdown.",
-        },
+        { principle: "Product Positioning", score: 0, comment: "Run a score to see your breakdown." },
       ],
     [result]
   );
 
+  const scoreCopy = async (content: string) => {
+    if (!hasBrain || !clientName || !content.trim() || loading || !brainId) return;
+
+    setLoading(true);
+    setProgress(0);
+    const interval = window.setInterval(() => {
+      setProgress((current) => Math.min(current + 12, 92));
+    }, 180);
+
+    try {
+      const response = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brainId, clientName, copy: content }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        toast.error(payload.error ?? "Score failed");
+        return;
+      }
+
+      setResult(payload);
+      toast.success("Score complete");
+      setProgress(100);
+      window.setTimeout(() => setProgress(0), 700);
+    } catch {
+      toast.error("Score failed");
+    } finally {
+      window.clearInterval(interval);
+      setLoading(false);
+    }
+  };
+
+  const copyRewrite = async () => {
+    if (!result?.rewrite) return;
+    await navigator.clipboard.writeText(result.rewrite);
+    toast.success("Copied!");
+  };
+
+  const saveRewrite = async () => {
+    if (!result?.rewrite || !brainId) return;
+    const response = await fetch("/api/ingest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        brainId,
+        sourceType: "campaign",
+        clientName,
+        title: `Rewrite for ${clientName}`,
+        content: result.rewrite,
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      toast.error(payload.error ?? "Save failed");
+      return;
+    }
+    toast.success("Saved to Brain");
+  };
+
+  const scoreAgain = async () => {
+    if (!result?.rewrite) return;
+    setCopy(result.rewrite);
+    await scoreCopy(result.rewrite);
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-      <section className="card card-orange">
-        <h1 className="font-display text-4xl font-bold text-[var(--white)]">Score Your Copy</h1>
-        <p className="mt-3 text-sm text-[var(--muted)]">
-          Rate copy against your agency&apos;s best work using Ogilvy&apos;s 15 principles.
-        </p>
+      <section className="card card-top-orange">
+        <h1 className="font-display text-4xl font-bold text-[var(--ink)]">New Copy to Score</h1>
+        <p className="mt-3 text-sm text-[var(--ink4)]">Paste any ad copy, tagline, or campaign text.</p>
+
+        {!hasBrain ? (
+          <div className="mt-6 rounded-[12px] border border-[var(--border)] bg-[var(--cream2)] p-4 text-sm text-[var(--ink3)]">
+            Ingest at least one client document first. Scoring uses your past campaigns as the reference point.
+            <div className="mt-3">
+              <Link href="/ingest" className="btn btn-primary btn-sm">
+                📥 Go to Ingest
+              </Link>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-6 space-y-5">
-          <label className="block space-y-2 text-sm text-[var(--muted)]">
+          <label className="block space-y-2 text-sm text-[var(--ink4)]">
             <span>Client</span>
             <select
               value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--white)] outline-none"
+              onChange={(event) => setClientName(event.target.value)}
+              className="form-select"
+              disabled={clientOptions.length === 0}
             >
-              {clientOptions.map((client) => (
-                <option key={client} value={client}>
-                  {client}
-                </option>
-              ))}
+              {clientOptions.length > 0 ? (
+                clientOptions.map((client) => (
+                  <option key={client} value={client}>
+                    {client}
+                  </option>
+                ))
+              ) : (
+                <option value="">No client history yet</option>
+              )}
             </select>
           </label>
 
-          <label className="block space-y-2 text-sm text-[var(--muted)]">
-            <span>Copy</span>
-            <Textarea
+          <label className="block space-y-2 text-sm text-[var(--ink4)]">
+            <span>Copy to Score</span>
+            <textarea
               value={copy}
-              onChange={(e) => setCopy(e.target.value)}
+              onChange={(event) => setCopy(event.target.value)}
               placeholder="Paste your new copy here..."
-              className="min-h-[250px]"
+              className="form-textarea min-h-[240px]"
+              disabled={!hasBrain || clientOptions.length === 0}
             />
           </label>
 
-          <Button type="button" className="w-full" disabled={!canScore || loading} onClick={() => scoreCopy(copy)}>
+          <button
+            type="button"
+            className="btn btn-orange w-full justify-center"
+            disabled={!hasBrain || !clientName || !copy.trim() || loading || clientOptions.length === 0}
+            onClick={() => scoreCopy(copy)}
+          >
             <Zap className="h-4 w-4" />
-            {loading ? "Analyzing against your agency's best work..." : "Score It"}
-          </Button>
+            {loading ? "Scoring..." : "Score It"}
+          </button>
 
           {loading ? (
             <div className="space-y-2">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
-                <div
-                  className="h-full rounded-full bg-[var(--accent)] transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${progress}%` }} />
               </div>
-              <div className="text-xs text-[var(--muted)]">Analyzing against your agency&apos;s best work...</div>
+              <div className="text-xs text-[var(--ink4)]">
+                Analyzing against your agency&apos;s best work...
+              </div>
             </div>
           ) : null}
         </div>
       </section>
 
-      <section
-        className={
-          result
-            ? "animate-[fadeInUp_0.35s_ease] space-y-6"
-            : "space-y-6 opacity-0 pointer-events-none"
-        }
-      >
+      <section className="space-y-6">
+        <div className="card mb-[14px]">
+          <div className="score-ring-wrap flex flex-col items-center justify-center gap-3 text-center">
+            <ScoreRing score={result ? result.overall_score : null} size={130} />
+            <div className="score-label text-sm text-[var(--ink3)]">
+              {result ? `vs agency avg: ${agencyAverageScore.toFixed(1)}/100` : "Run a score to see results"}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center" }} className="mt-4">
+            <div
+              style={{ textAlign: "center", padding: "10px 20px", background: "var(--cream2)", borderRadius: 8, flex: 1 }}
+            >
+              <div style={{ fontSize: 11, color: "var(--ink4)", marginBottom: 3 }}>Before</div>
+              <div style={{ fontFamily: "var(--font-display), serif", fontSize: 22, color: "var(--orange)" }}>
+                {result ? result.overall_score : "—"}
+              </div>
+            </div>
+            <div
+              style={{ textAlign: "center", padding: "10px 20px", background: "var(--cream2)", borderRadius: 8, flex: 1 }}
+            >
+              <div style={{ fontSize: 11, color: "var(--ink4)", marginBottom: 3 }}>After Rewrite</div>
+              <div style={{ fontFamily: "var(--font-display), serif", fontSize: 22, color: "var(--green)" }}>
+                {result ? result.rewrite_score : "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="font-display text-[16px] font-semibold text-[var(--ink)]">Breakdown (Ogilvy 15)</h2>
+          <div className="mt-5 max-h-[420px] overflow-y-auto scrollbar-thin">
+            {result ? (
+              scoreRows.map((row) => {
+                const color = row.score > 5 ? "var(--green)" : row.score >= 3 ? "var(--orange)" : "#c0391a";
+                const width = Math.max(Math.min((row.score / 6.7) * 100, 100), 8);
+                return (
+                  <div key={row.principle} className="breakdown-row">
+                    <div className="breakdown-name">{row.principle}</div>
+                    <div className="breakdown-bar">
+                      <div className="breakdown-fill" style={{ width: `${width}%`, background: color }} />
+                    </div>
+                    <div className="breakdown-score" style={{ color }}>
+                      {row.score}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="empty-state py-8">
+                <div className="empty-sub">Score copy to see the 15-principle breakdown</div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {result ? (
           <>
-            <div className="card card-green">
-              <div className="flex flex-col items-center justify-center gap-3 text-center">
-                <ScoreRing score={result.overall_score} size={150} />
-                <div className="font-display text-2xl font-bold text-[var(--white)]">
-                  vs your agency avg: {agencyAverageScore.toFixed(1)}pts
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <h2 className="font-display text-2xl font-bold text-[var(--white)]">Breakdown</h2>
-              <div className="mt-5 max-h-[420px] overflow-y-auto scrollbar-thin">
-                <table className="w-full text-left text-sm">
-                  <thead className="sticky top-0 bg-[var(--card)] text-[11px] uppercase tracking-[0.16em] text-[var(--muted)]">
-                    <tr>
-                      <th className="pb-3">Principle</th>
-                      <th className="pb-3">Score</th>
-                      <th className="pb-3">Comment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scoreRows.map((row) => {
-                      const tone =
-                        row.score > 5
-                          ? "text-[var(--accent)]"
-                          : row.score >= 3
-                            ? "text-[var(--accent2)]"
-                            : "text-red-400";
-                      return (
-                        <tr key={row.principle} className="border-t border-[var(--border)]">
-                          <td className="py-3 pr-4 text-[var(--white)]">{row.principle}</td>
-                          <td className={`py-3 pr-4 font-bold ${tone}`}>{row.score}</td>
-                          <td className="py-3 text-[var(--text)]">{row.comment}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              <h2 className="font-display text-2xl font-bold text-[var(--white)]">Top 3 Failures</h2>
+            <div className="space-y-3">
+              <h2 className="font-display text-2xl font-bold text-[var(--ink)]">Top 3 Failures</h2>
               {result.top_3_failures.map((failure) => (
-                <div key={failure.principle} className="card border-l-2 border-l-[var(--accent2)]">
-                  <h3 className="font-display text-lg font-bold text-[var(--white)]">{failure.principle}</h3>
-                  <p className="mt-2 text-sm text-[var(--text)]">
-                    <span className="text-[var(--accent2)]">What went wrong:</span>{" "}
-                    {failure.what_went_wrong}
+                <div key={failure.principle} className="card border-l-2 border-l-[var(--orange)]">
+                  <h3 className="font-display text-lg font-bold text-[var(--ink)]">{failure.principle}</h3>
+                  <p className="mt-2 text-sm text-[var(--ink3)]">
+                    <span className="text-[var(--orange)]">What went wrong:</span> {failure.what_went_wrong}
                   </p>
-                  <p className="mt-2 text-sm text-[var(--text)]">
-                    <span className="text-[var(--accent)]">How to fix:</span> {failure.how_to_fix}
+                  <p className="mt-2 text-sm text-[var(--ink3)]">
+                    <span className="text-[var(--green)]">How to fix:</span> {failure.how_to_fix}
                   </p>
                 </div>
               ))}
             </div>
 
-            <div className="card border-l-2 border-l-[var(--accent)]">
+            <div className="card card-top-green">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-display text-2xl font-bold text-[var(--white)]">
+                <h2 className="font-display text-2xl font-bold text-[var(--ink)]">
                   ✨ Rewritten to {result.rewrite_score}/100
                 </h2>
-                <div className="text-xs text-[var(--muted)]">
-                  Cost: ₹{(result.cost_usd * 83).toFixed(2)}
-                </div>
               </div>
-              <pre className="mt-4 whitespace-pre-wrap rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 font-body text-sm leading-7 text-[var(--text)]">
+              <div className="mt-4 whitespace-pre-wrap rounded-[9px] bg-[var(--cream2)] p-4 text-sm leading-7 text-[var(--ink3)]">
                 {result.rewrite}
-              </pre>
+              </div>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Button type="button" variant="outline" onClick={handleCopy}>
+                <button type="button" onClick={copyRewrite} className="btn btn-outline">
                   <Copy className="h-4 w-4" />
                   Copy
-                </Button>
-                <Button type="button" onClick={() => setCopy(result.rewrite)}>
+                </button>
+                <button type="button" onClick={scoreAgain} className="btn btn-outline">
                   <Zap className="h-4 w-4" />
                   Score this rewrite
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={async () => {
-                    const response = await fetch("/api/ingest", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        brainId,
-                        sourceType: "campaign",
-                        clientName,
-                        title: `Rewrite for ${clientName}`,
-                        content: result.rewrite,
-                      }),
-                    });
-                    const payload = await response.json();
-                    if (!response.ok) {
-                      toast.error(payload.error ?? "Save failed");
-                      return;
-                    }
-                    toast.success("Rewrite saved to brain");
-                  }}
-                >
+                </button>
+                <button type="button" onClick={saveRewrite} className="btn btn-outline">
                   <Save className="h-4 w-4" />
                   Save to Brain
-                </Button>
+                </button>
               </div>
             </div>
           </>
-        ) : (
-          <div className="card border-dashed border-[var(--border)] bg-[var(--surface)] text-center text-[var(--muted)]">
-            Score your copy to unlock the judgment layer.
-          </div>
-        )}
+        ) : null}
       </section>
     </div>
   );

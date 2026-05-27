@@ -49,17 +49,17 @@ export function EditableField({
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className={className ?? "text-left transition hover:text-[var(--white)]"}
+        className={className ?? "text-left transition hover:opacity-80"}
       >
-        {value}
+        {value || (multiline ? "Click to add description" : "Click to edit")}
       </button>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-[9px] border border-[var(--border)] bg-white p-3">
       {multiline ? (
-        <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} className="min-h-[120px]" />
       ) : (
         <Input value={draft} onChange={(e) => setDraft(e.target.value)} />
       )}

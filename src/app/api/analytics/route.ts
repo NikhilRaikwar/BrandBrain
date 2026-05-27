@@ -12,11 +12,7 @@ export async function GET() {
     }
 
     const brain = await getUserBrain(user.id);
-    if (!brain) {
-      return NextResponse.json({ error: "Brain not found" }, { status: 404 });
-    }
-
-    const data = await getAnalyticsData(brain.id);
+    const data = await getAnalyticsData(brain?.id ?? null);
     return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error(error);

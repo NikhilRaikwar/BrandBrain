@@ -8,7 +8,18 @@ function labelForDay(dateKey: string) {
   return new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(new Date(`${dateKey}T00:00:00Z`));
 }
 
-export async function getAnalyticsData(brainId: string) {
+export async function getAnalyticsData(brainId: string | null) {
+  if (!brainId) {
+    return {
+      scoreSeries: [],
+      querySeries: [],
+      costTable: [],
+      totalCosts: { usd: 0, inr: 0 },
+      topClients: [],
+      overallStats: { docs: 0, concepts: 0, queries: 0, scores: 0 },
+    };
+  }
+
   const admin = createSupabaseAdminClient();
   const [scoreRes, queryRes, sourceRes, cardsRes] = await Promise.all([
     admin.from("score_log").select("*").eq("brain_id", brainId).order("created_at", { ascending: true }),
