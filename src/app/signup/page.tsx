@@ -16,6 +16,10 @@ export default function SignupPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const confirmed = window.confirm(
+      "Create your BrandBrain account with this email?"
+    );
+    if (!confirmed) return;
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signUp({
@@ -30,7 +34,7 @@ export default function SignupPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("🧠 Your brain is ready — demo data loaded");
+    toast.success("Account created. Check your email to continue.");
     router.push("/dashboard");
   };
 
@@ -73,7 +77,7 @@ export default function SignupPage() {
         </div>
 
         <Button type="submit" className="mt-6 w-full" disabled={loading}>
-          {loading ? "Creating brain..." : "Create Brain"}
+          {loading ? "Creating account..." : "Create Account"}
         </Button>
 
         <p className="mt-5 text-center text-sm text-[var(--muted)]">

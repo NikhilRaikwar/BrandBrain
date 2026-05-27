@@ -23,6 +23,9 @@ export const buttonSizes: Record<NonNullable<ButtonProps["size"]>, string> = {
   lg: "h-12 px-5 text-sm",
 };
 
+const buttonBaseClassName =
+  "inline-flex items-center justify-center gap-2 rounded-xl border font-medium transition duration-150 ease-out hover:-translate-y-px active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transform-none motion-reduce:transition-none";
+
 export function Button({
   className,
   variant = "primary",
@@ -32,12 +35,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl border font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60",
-        buttonVariants[variant],
-        buttonSizes[size],
-        className
-      )}
+      className={cn(buttonBaseClassName, buttonVariants[variant], buttonSizes[size], className)}
       {...props}
     >
       {children}
@@ -49,9 +47,5 @@ export function buttonClassName(
   variant: NonNullable<ButtonProps["variant"]> = "primary",
   size: NonNullable<ButtonProps["size"]> = "md"
 ) {
-  return cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl border font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60",
-    buttonVariants[variant],
-    buttonSizes[size]
-  );
+  return cn(buttonBaseClassName, buttonVariants[variant], buttonSizes[size]);
 }

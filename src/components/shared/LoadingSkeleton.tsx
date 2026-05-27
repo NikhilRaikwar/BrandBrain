@@ -11,7 +11,7 @@ export function LoadingSkeleton({ lines = 3, height = "1rem" }: LoadingSkeletonP
       {Array.from({ length: lines }).map((_, index) => (
         <div
           key={index}
-          className={cn("animate-pulse rounded-lg bg-white/5")}
+          className={cn("animate-pulse rounded-lg bg-[var(--cream2)]")}
           style={{ height, width: `${100 - index * 12}%` }}
         />
       ))}

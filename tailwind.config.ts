@@ -21,8 +21,8 @@ const config: Config = {
         white: "var(--white)",
       },
       fontFamily: {
-        display: ["var(--font-syne)", "sans-serif"],
-        body: ["var(--font-dm-mono)", "monospace"],
+        display: ["var(--font-display)", "serif"],
+        body: ["var(--font-body)", "sans-serif"],
       },
       boxShadow: {
         glow: "0 0 0 1px rgba(0,229,160,0.2), 0 10px 30px rgba(0,229,160,0.08)",

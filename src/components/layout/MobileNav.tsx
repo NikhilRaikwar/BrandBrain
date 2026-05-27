@@ -9,6 +9,7 @@ import {
   Upload,
   Zap,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
@@ -30,7 +31,7 @@ export function MobileNav() {
           const active = pathname === item.href;
           const Icon = item.icon;
           return (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className={cn(
@@ -40,7 +41,7 @@ export function MobileNav() {
             >
               <Icon className="h-4 w-4" />
               <span className="mt-1">{item.label}</span>
-            </a>
+            </Link>
           );
         })}
       </div>
