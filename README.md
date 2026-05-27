@@ -199,6 +199,7 @@ sequenceDiagram
 ## Ogilvy Scoring Flow
 
 ```mermaid
+flowchart TD
     A[User pastes copy] --> B{Brain has client history?}
     B -- No --> C[❌ Error: Ingest first]
     B -- Yes --> D[Fetch client knowledge_cards]
