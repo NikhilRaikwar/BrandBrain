@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/shared/BrandMark";
+import { BrainCircuit, Sparkles, Target } from "lucide-react";
+
+const socialProofIcons = [
+  { icon: BrainCircuit, label: "Memory", tone: "mint" },
+  { icon: Sparkles, label: "Ideas", tone: "sand" },
+  { icon: Target, label: "Focus", tone: "amber" },
+];
 
 export default function HomePage() {
   return (
@@ -28,7 +35,7 @@ export default function HomePage() {
 
       <section className="hero">
         <div>
-          <div className="badge">🏆 OpenAI × Outskill Hackathon 2025</div>
+          <div className="badge">🏆 OpenAI × Outskill Hackathon 2026</div>
           <h1>
             Your agency&apos;s <em>creative memory,</em>
             <br />
@@ -46,10 +53,12 @@ export default function HomePage() {
             </a>
           </div>
           <div className="hero-social-proof">
-            <div className="avatars">
-              <div className="avatar">N</div>
-              <div className="avatar">A</div>
-              <div className="avatar">R</div>
+            <div className="proof-chips" aria-label="BrandBrain highlights">
+              {socialProofIcons.map(({ icon: Icon, label, tone }) => (
+                <div key={label} className={`proof-chip proof-chip-${tone}`} aria-hidden="true" title={label}>
+                  <Icon className="h-3.5 w-3.5" />
+                </div>
+              ))}
             </div>
             <span>Built for agencies at the OpenAI Hackathon</span>
           </div>
@@ -229,7 +238,7 @@ export default function HomePage() {
       <footer>
         <div className="footer-inner">
           <span className="footer-logo">BrandBrain</span>
-          <span className="footer-note">Built for OpenAI × Outskill AI Builders Hackathon · May 2025</span>
+          <span className="footer-note">Built for OpenAI × Outskill AI Builders Hackathon · May 2026</span>
         </div>
       </footer>
     </main>
