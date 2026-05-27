@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/shared/BrandMark";
 
 export default function HomePage() {
   return (
@@ -6,8 +7,7 @@ export default function HomePage() {
       <nav>
         <div className="nav-inner">
           <Link href="/" className="logo">
-            <div className="logo-icon">🧠</div>
-            <span className="logo-name">BrandBrain</span>
+            <BrandMark />
           </Link>
           <div className="nav-links">
             <a href="#features" className="nav-link">

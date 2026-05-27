@@ -42,11 +42,11 @@ export async function getUserBrainIds(userId: string) {
   return data?.map((row) => row.id) ?? [];
 }
 
-export async function createUserBrain(userId: string) {
+export async function createUserBrain(userId: string, name = "My Agency Brain") {
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
     .from("brains")
-    .insert({ user_id: userId, name: "My Agency Brain" })
+    .insert({ user_id: userId, name })
     .select("*")
     .single();
 

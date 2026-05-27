@@ -57,10 +57,11 @@ export function QueryConsole({
     setLoading(true);
 
     try {
+      const body = shareToken ? { question: trimmed, shareToken } : { question: trimmed, brainId };
       const response = await fetch("/api/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: trimmed, brainId, shareToken }),
+        body: JSON.stringify(body),
       });
       const payload = await response.json();
 

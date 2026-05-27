@@ -4,6 +4,8 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import type { ReactNode } from "react";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   variable: "--font-display",
@@ -19,8 +21,58 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "BrandBrain",
-  description: "Living Company Brain for marketing agencies.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "BrandBrain",
+    template: "%s | BrandBrain",
+  },
+  description: "Living Company Brain for marketing agencies. Ingest campaigns, query brand knowledge, and score copy using Ogilvy-style judgment.",
+  keywords: [
+    "BrandBrain",
+    "company brain",
+    "marketing agency AI",
+    "knowledge base",
+    "Ogilvy copy reviewer",
+    "Supabase",
+    "Next.js 14",
+    "OpenAI",
+    "brand knowledge",
+    "agency ops",
+  ],
+  authors: [{ name: "BrandBrain" }],
+  creator: "BrandBrain",
+  publisher: "BrandBrain",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "BrandBrain",
+    description:
+      "Living Company Brain for marketing agencies. Ingest campaigns, query brand knowledge, and score copy using Ogilvy-style judgment.",
+    url: siteUrl,
+    siteName: "BrandBrain",
+    type: "website",
+    images: [
+      {
+        url: "/brandbrainlogo.png",
+        width: 1200,
+        height: 630,
+        alt: "BrandBrain logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BrandBrain",
+    description:
+      "Living Company Brain for marketing agencies. Ingest campaigns, query brand knowledge, and score copy using Ogilvy-style judgment.",
+    images: ["/brandbrainlogo.png"],
+  },
+  icons: {
+    icon: "/brandbrainlogo.png",
+    shortcut: "/brandbrainlogo.png",
+    apple: "/brandbrainlogo.png",
+  },
 };
 
 export default function RootLayout({

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { BarChart2, LayoutDashboard, LogOut, MessageSquare, Share2, Upload, Zap } from "lucide-react";
+import { BrandMark } from "@/components/shared/BrandMark";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, section: "Main" },
@@ -34,11 +35,7 @@ export function Sidebar({ userEmail, open = false, onClose }: SidebarProps) {
   return (
     <aside className={cn("sidebar-shell", open ? "open" : "")}>
       <div className="sidebar-logo">
-        <div className="logo-box">🧠</div>
-        <div>
-          <div className="logo-text">BrandBrain</div>
-          <div className="logo-sub">Company Brain</div>
-        </div>
+        <BrandMark size={34} />
       </div>
 
       <div className="nav-section">Main</div>

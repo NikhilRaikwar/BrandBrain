@@ -2,6 +2,7 @@
 
 import { EditableField } from "./EditableField";
 import { PublicToggle } from "./PublicToggle";
+import { useEffect, useState } from "react";
 import { Copy, ExternalLink, Linkedin } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,30 +20,40 @@ type ShareWorkspaceProps = {
 };
 
 export function ShareWorkspace({ brain }: ShareWorkspaceProps) {
-  const shareUrl = `https://brandbrain.vercel.app/b/${brain.share_token}`;
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const sharePath = `/b/${brain.share_token}`;
+  const shareUrl = origin ? `${origin}${sharePath}` : sharePath;
+  const buildShareUrl = () => `${window.location.origin}${sharePath}`;
+  const clientLabel = brain.name.replace(/^Brain #\d+$/i, "my client");
   const shareText = [
-    `I just shared my BrandBrain, "${brain.name}".`,
+    `I just created my brain for "${clientLabel}" with BrandBrain.`,
     brain.description ? brain.description : "A living memory of how this agency thinks and creates.",
     "",
     `Explore it here: ${shareUrl}`,
     "",
     "Built with BrandBrain to turn campaign history into reusable creative memory.",
+    "",
+    "#BrandBrain #AgencyOps #AI",
   ].join("\n");
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(shareUrl);
+    await navigator.clipboard.writeText(buildShareUrl());
     toast.success("Copied!");
   };
 
   const openShareUrl = () => {
-    window.open(shareUrl, "_blank", "noopener,noreferrer");
+    window.open(buildShareUrl(), "_blank", "noopener,noreferrer");
   };
 
   const shareLinkedIn = async () => {
     await navigator.clipboard.writeText(shareText);
     toast.success("LinkedIn post template copied.");
     window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(buildShareUrl())}`,
       "_blank",
       "noopener,noreferrer"
     );

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { QueryConsole } from "@/components/brain/QueryConsole";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { BrandMark } from "@/components/shared/BrandMark";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function PublicBrainPage({
   return (
     <main className="min-h-screen bg-[var(--cream)] px-4 py-6 text-[var(--ink)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1100px] space-y-4">
+        <BrandMark size={34} />
         <div className="inline-flex items-center rounded-full border border-[var(--green-border)] bg-[var(--green-bg)] px-3 py-1 text-[11px] font-semibold text-[var(--green)]">
           Powered by BrandBrain
         </div>

@@ -33,7 +33,7 @@ export function WelcomeBanner({ docsIngested, userName, message }: WelcomeBanner
         <h2>
           {greeting}, {userName} 👋
         </h2>
-        <p>{message}</p>
+        <p style={{ fontSize: 13, color: "var(--ink4)", marginTop: 4 }}>{message}</p>
       </div>
       <div className="welcome-actions">
         <Link href="/ingest" className="btn btn-primary btn-sm">

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { Menu } from "lucide-react";
+import { BrandMark } from "@/components/shared/BrandMark";
 
 export function AuthLayout({
   children,
@@ -24,7 +25,7 @@ export function AuthLayout({
             <button className="hamburger" type="button" onClick={() => setMobileOpen((open) => !open)}>
               <Menu className="h-5 w-5" />
             </button>
-            <span className="topbar-title">BrandBrain</span>
+            <BrandMark size={28} showName={false} />
           </div>
           <div className="w-full">{children}</div>
         </main>

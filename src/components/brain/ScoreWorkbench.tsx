@@ -54,6 +54,13 @@ export function ScoreWorkbench({
     [result]
   );
 
+  const afterColor =
+    result && result.rewrite_score > result.overall_score
+      ? "var(--green)"
+      : result && result.rewrite_score === result.overall_score
+        ? "var(--ink3)"
+        : "#c0391a";
+
   const scoreCopy = async (content: string) => {
     if (!hasBrain || !clientName || !content.trim() || loading || !brainId) return;
 
@@ -131,7 +138,7 @@ export function ScoreWorkbench({
             Ingest at least one client document first. Scoring uses your past campaigns as the reference point.
             <div className="mt-3">
               <Link href="/ingest" className="btn btn-primary btn-sm">
-                📥 Go to Ingest
+                Go to Ingest
               </Link>
             </div>
           </div>
@@ -153,10 +160,22 @@ export function ScoreWorkbench({
                   </option>
                 ))
               ) : (
-                <option value="">No client history yet</option>
+                <option value="">No client campaigns found</option>
               )}
             </select>
           </label>
+
+          {clientOptions.length === 0 ? (
+            <div className="rounded-[12px] border border-[var(--border)] bg-[var(--cream2)] p-4 text-sm leading-7 text-[var(--ink3)]">
+              No client campaigns found. Go to Ingest to add at least one Campaign or Brief for a client,
+              then come back here to score.
+              <div className="mt-3">
+                <Link href={brainId ? `/ingest?brain=${brainId}` : "/ingest"} className="btn btn-primary btn-sm">
+                  Go to Ingest
+                </Link>
+              </div>
+            </div>
+          ) : null}
 
           <label className="block space-y-2 text-sm text-[var(--ink4)]">
             <span>Copy to Score</span>
@@ -202,7 +221,13 @@ export function ScoreWorkbench({
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }} className="mt-4">
             <div
-              style={{ textAlign: "center", padding: "10px 20px", background: "var(--cream2)", borderRadius: 8, flex: 1 }}
+              style={{
+                textAlign: "center",
+                padding: "10px 20px",
+                background: "var(--cream2)",
+                borderRadius: 8,
+                flex: 1,
+              }}
             >
               <div style={{ fontSize: 11, color: "var(--ink4)", marginBottom: 3 }}>Before</div>
               <div style={{ fontFamily: "var(--font-display), serif", fontSize: 22, color: "var(--orange)" }}>
@@ -210,10 +235,16 @@ export function ScoreWorkbench({
               </div>
             </div>
             <div
-              style={{ textAlign: "center", padding: "10px 20px", background: "var(--cream2)", borderRadius: 8, flex: 1 }}
+              style={{
+                textAlign: "center",
+                padding: "10px 20px",
+                background: "var(--cream2)",
+                borderRadius: 8,
+                flex: 1,
+              }}
             >
               <div style={{ fontSize: 11, color: "var(--ink4)", marginBottom: 3 }}>After Rewrite</div>
-              <div style={{ fontFamily: "var(--font-display), serif", fontSize: 22, color: "var(--green)" }}>
+              <div style={{ fontFamily: "var(--font-display), serif", fontSize: 22, color: afterColor }}>
                 {result ? result.rewrite_score : "—"}
               </div>
             </div>
@@ -267,7 +298,11 @@ export function ScoreWorkbench({
             <div className="card card-top-green">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-display text-2xl font-bold text-[var(--ink)]">
-                  ✨ Rewritten to {result.rewrite_score}/100
+                  {result.rewrite_score > result.overall_score
+                    ? `Rewrite to ${result.rewrite_score}/100 (+${result.rewrite_score - result.overall_score} pts)`
+                    : result.rewrite_score === result.overall_score
+                      ? `Rewrite (${result.rewrite_score}/100 - same score, new angle)`
+                      : `Rewrite (${result.rewrite_score}/100)`}
                 </h2>
               </div>
               <div className="mt-4 whitespace-pre-wrap rounded-[9px] bg-[var(--cream2)] p-4 text-sm leading-7 text-[var(--ink3)]">

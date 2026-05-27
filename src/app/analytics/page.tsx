@@ -29,6 +29,8 @@ export default async function AnalyticsPage({
     : {
         scoreSeries: [],
         querySeries: [],
+        costTable: [],
+        totalCosts: { usd: 0, inr: 0 },
         overallStats: { docs: 0, concepts: 0, queries: 0, scores: 0 },
       };
 

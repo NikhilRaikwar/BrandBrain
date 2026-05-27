@@ -166,14 +166,14 @@ function DashboardStatsSection({ data }: { data: DashboardData }) {
         value={data.brain.docs_ingested}
         iconEmoji="📄"
         accentColor="green"
-        subText={data.hasRealBrain ? "+1 this week" : "Start by ingesting"}
+        subText="This brain"
       />
       <StatCard
         label="Concepts Extracted"
         value={data.brain.concepts_extracted}
         iconEmoji="🧩"
         accentColor="purple"
-        subText={data.hasRealBrain ? `From ${data.brain.docs_ingested} documents` : "From your first ingest"}
+        subText="This brain"
       />
       <StatCard
         label="Queries Answered"
@@ -217,46 +217,59 @@ function DashboardActivitySection({
             <div className="section-sub">Queries and scores from your brain</div>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px]">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Preview</th>
-                <th>Result</th>
-                <th>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.activity.length > 0 ? (
-                data.activity.map((item, index) => {
-                  const badgeClass =
-                    item.type === "query" ? "badge-blue" : item.type === "score" ? "badge-green" : "badge-orange";
-                  return (
-                    <tr key={`${item.type}-${item.created_at}-${index}`}>
-                      <td className="py-4">
-                        <span className={`badge ${badgeClass}`}>{item.label}</span>
-                      </td>
-                      <td className="py-4 pr-4 text-[var(--ink)]">{item.preview.slice(0, 88)}</td>
-                      <td className="py-4 pr-4 text-[var(--ink3)]">{item.result || "—"}</td>
-                      <td className="py-4 text-[var(--ink3)]">{timeAgo(item.created_at)}</td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={4}>
-                    <div className="empty-state py-10">
-                      <div className="empty-icon">🌱</div>
-                      <div className="empty-title">No activity yet</div>
-                      <div className="empty-sub">Ingest a document or ask your first question to get started.</div>
+        {data.activity.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {data.activity.map((item, index) => {
+              const icon = item.type === "query" ? "💬" : item.type === "score" ? "⚡" : "📥";
+              const badgeClass =
+                item.type === "query" ? "badge-blue" : item.type === "score" ? "badge-green" : "badge-orange";
+              return (
+                <div
+                  key={index}
+                  style={{
+                    background: "white",
+                    border: "1px solid var(--border)",
+                    borderRadius: 10,
+                    padding: "12px 16px",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 12,
+                  }}
+                >
+                  <span style={{ fontSize: 18, lineHeight: 1, marginTop: 2 }}>{icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", marginBottom: 3 }}>
+                      {item.preview.slice(0, 72)}
+                      {item.preview.length > 72 ? "…" : ""}
                     </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    <div style={{ fontSize: 12, color: "var(--ink4)" }}>
+                      {item.result?.slice(0, 90)}
+                      {(item.result?.length ?? 0) > 90 ? "…" : ""}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      gap: 4,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span className={`badge ${badgeClass}`}>{item.type}</span>
+                    <span style={{ fontSize: 11, color: "var(--ink4)" }}>{timeAgo(item.created_at)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="empty-state py-10">
+            <div className="empty-icon">🌱</div>
+            <div className="empty-title">No activity yet</div>
+            <div className="empty-sub">Ingest a document or ask your first question to get started.</div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">

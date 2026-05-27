@@ -253,12 +253,14 @@ nav {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--ink);
+  background: var(--cream2);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   color: var(--cream);
+  position: relative;
+  overflow: hidden;
 }
 
 .logo-name {
@@ -1482,7 +1484,7 @@ tr:last-child td {
 .logo-box {
   width: 34px;
   height: 34px;
-  background: var(--ink);
+  background: var(--cream2);
   border-radius: 9px;
   display: flex;
   align-items: center;
@@ -1490,6 +1492,8 @@ tr:last-child td {
   font-size: 16px;
   flex-shrink: 0;
   color: var(--cream);
+  position: relative;
+  overflow: hidden;
 }
 
 .logo-text {
@@ -1671,6 +1675,24 @@ tr:last-child td {
 }
 
 @media (max-width: 768px) {
+  .nav-inner {
+    height: auto;
+    padding: 14px 0;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .nav-links {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .nav-link {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .hero {
     grid-template-columns: minmax(0, 1fr) !important;
     padding: 60px 20px 40px;
@@ -1722,5 +1744,30 @@ tr:last-child td {
 
   .welcome-actions {
     flex-wrap: wrap;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .card-sm {
+    padding: 14px;
+  }
+
+  .section {
+    padding: 72px 18px;
+  }
+
+  .process-section,
+  .cta-section {
+    padding: 72px 18px;
+  }
+
+  .logo-name {
+    font-size: 18px;
+  }
+
+  .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

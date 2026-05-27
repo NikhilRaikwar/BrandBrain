@@ -16,6 +16,8 @@ import {
 type AnalyticsChartsProps = {
   scoreSeries: Array<{ date: string; avg_before: number; avg_after: number }>;
   querySeries: Array<{ day: string; count: number }>;
+  costTable: Array<{ date: string; queries: number; scores: number; tokens: number; cost_usd: number; cost_inr: number }>;
+  totalCosts: { usd: number; inr: number };
   overallStats: { docs: number; concepts: number; queries: number; scores: number };
 };
 
@@ -28,7 +30,7 @@ function tooltipStyle() {
   } as const;
 }
 
-export function AnalyticsCharts({ scoreSeries, querySeries, overallStats }: AnalyticsChartsProps) {
+export function AnalyticsCharts({ scoreSeries, querySeries, costTable, totalCosts, overallStats }: AnalyticsChartsProps) {
   const scoreData = scoreSeries.length > 0 ? scoreSeries : Array.from({ length: 7 }, (_, index) => ({
     date: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index],
     avg_before: 0,
@@ -38,6 +40,14 @@ export function AnalyticsCharts({ scoreSeries, querySeries, overallStats }: Anal
     day: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index],
     count: 0,
   }));
+  const costData = costTable.length > 0 ? costTable : Array.from({ length: 7 }, (_, index) => ({
+    date: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index],
+    queries: 0,
+    scores: 0,
+    tokens: 0,
+    cost_usd: 0,
+    cost_inr: 0,
+  }));
 
   return (
     <div className="space-y-6">
@@ -46,6 +56,13 @@ export function AnalyticsCharts({ scoreSeries, querySeries, overallStats }: Anal
         <StatCard label="Concepts" value={overallStats.concepts} iconEmoji="🧩" accentColor="purple" />
         <StatCard label="Queries" value={overallStats.queries} iconEmoji="💬" accentColor="blue" />
         <StatCard label="Scores Run" value={overallStats.scores} iconEmoji="⚡" accentColor="orange" />
+        <StatCard
+          label="Total Spend"
+          value={`₹${Math.round(totalCosts.inr).toLocaleString("en-IN")}`}
+          iconEmoji="💸"
+          accentColor="orange"
+          subText={`USD ${totalCosts.usd.toFixed(4)}`}
+        />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
@@ -78,6 +95,32 @@ export function AnalyticsCharts({ scoreSeries, querySeries, overallStats }: Anal
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </section>
+
+      <section className="card">
+        <h2 className="font-display text-2xl font-bold text-[var(--ink)]">Cost Per Day</h2>
+        <div className="mt-6 h-[320px]">
+            <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={costData}>
+              <CartesianGrid stroke="rgba(26,21,16,0.06)" vertical={false} />
+              <XAxis
+                dataKey="date"
+                stroke="var(--ink4)"
+                tickFormatter={(value) => {
+                  const date = new Date(`${value}T00:00:00Z`);
+                  if (Number.isNaN(date.getTime())) return value;
+                  return date.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+                }}
+              />
+              <YAxis stroke="var(--ink4)" />
+              <Tooltip
+                contentStyle={tooltipStyle()}
+                formatter={(value) => [`₹${Number(value).toLocaleString("en-IN")}`, "Spend"]}
+              />
+              <Bar dataKey="cost_inr" fill="var(--green)" radius={[10, 10, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </section>
     </div>
