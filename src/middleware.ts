@@ -2,6 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  if (pathname === "/brandbrainslide.html" || pathname === "/brandbrainslide") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/brandbrainslides";
+    return NextResponse.redirect(redirectUrl);
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
