@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Instrument_Serif } from "next/font/google";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import type { ReactNode } from "react";
 
@@ -85,6 +86,7 @@ export default function RootLayout({
       <body>
         {children}
         <Toaster richColors closeButton position="top-right" />
+        <Analytics />
       </body>
     </html>
   );
