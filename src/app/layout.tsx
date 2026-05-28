@@ -54,10 +54,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/brandbrainlogo.png",
+        url: "/brandbrainbanner.png",
         width: 1200,
         height: 630,
-        alt: "BrandBrain logo",
+        alt: "BrandBrain banner",
       },
     ],
   },
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     title: "BrandBrain",
     description:
       "Living Company Brain for marketing agencies. Ingest campaigns, query brand knowledge, and score copy using Ogilvy-style judgment.",
-    images: ["/brandbrainlogo.png"],
+    images: ["/brandbrainbanner.png"],
   },
   icons: {
     icon: "/brandbrainlogo.png",
