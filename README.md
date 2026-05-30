@@ -3,8 +3,8 @@
 > BrandBrain is the memory layer for marketing agencies.
 > It turns scattered client knowledge into cited answers, Ogilvy-style copy judgment, and reusable workflows.
 
-Live site: [https://brandbrain-nu.vercel.app](https://brandbrain-nu.vercel.app)
-Demo video: [https://youtu.be/CaMF0aBYBp8](https://youtu.be/CaMF0aBYBp8)
+- Live site: [https://brandbrain-nu.vercel.app](https://brandbrain-nu.vercel.app)
+- Demo video: [https://youtu.be/CaMF0aBYBp8](https://youtu.be/CaMF0aBYBp8)
 
 [![Built for OpenAI x Outskill Hackathon](https://img.shields.io/badge/OpenAI%20%C3%97%20Outskill-Hackathon%202026-green?style=flat-square)](https://outskill.com)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-black?style=flat-square)](https://nextjs.org)
@@ -17,7 +17,7 @@ Demo video: [https://youtu.be/CaMF0aBYBp8](https://youtu.be/CaMF0aBYBp8)
 
 Most agencies lose context when work moves between people, docs, and chats. BrandBrain makes that memory searchable and reusable by ingesting campaigns, briefs, and brand guides, then scoring new copy against the agency's own best work using David Ogilvy's 15 advertising principles.
 
-The product was built in an AI-native workflow inspired by the gstack approach and the 2026 founders playbook: validate the wedge, build the narrow MVP, and ship the working product fast.
+The product was built in an AI-native workflow: validate the wedge, build the narrow MVP, and ship the working product fast.
 
 ---
 
@@ -167,8 +167,9 @@ sequenceDiagram
     App->>DB: Save raw_source + knowledge_cards
 
     Note over U,P: Create Second Brain
-    U->>App: Ingest doc for new client (Adidas)
-    App->>DB: Creates Brain #2 automatically
+    U->>App: Creates Brain #2 for another client
+    App->>DB: Saves separate brain workspace
+    U->>App: Ingests document into Brain #2
 
     Note over U,P: Query Any Brain
     U->>App: Select Brain #1 (Nike), ask question
@@ -213,7 +214,7 @@ flowchart TD
     K -- No --> L
 
     L --> M[Save to score_log]
-    M --> N[User can: Copy rewrite, Save to Brain, Score again]
+    M --> N[User can: Copy, Share, Save to Brain, Score again]
 
     style F fill:#412991,color:#fff
     style L fill:#1a6b3c,color:#fff
@@ -270,6 +271,7 @@ mindmap
         Principle breakdown
         Failure diagnosis
         AI rewrite
+        Save rewrite to brain
       Share Brain
         Public read-only link
         Token-based access
@@ -283,6 +285,7 @@ mindmap
 ```mermaid
 graph LR
     FE[Next.js 14 App Router<br/>Tailwind CSS<br/>Recharts] --> API[API Routes<br/>/api/ingest<br/>/api/query<br/>/api/score]
+    API --> RW[/api/rewrite/save]
     API --> OAI[OpenAI GPT-4o-mini]
     API --> SB[(Supabase<br/>Auth + PostgreSQL<br/>Row Level Security)]
     FE --> SB
@@ -306,12 +309,13 @@ graph LR
 - Score any copy 0-100 using David Ogilvy's 15 advertising principles
 - Benchmarked against the client's own past campaigns
 - Get a detailed breakdown, top 3 failure diagnoses, and an AI rewrite
+- Copy, share, rescore, or save the rewrite back into the brain
 - Before vs after score tracked in analytics
 
 ### Skills Layer - Query Brain
 - Ask anything in plain English
 - Answers cite the exact documents they came from
-- No hallucinations - only the agency's knowledge
+- Answers are grounded in the agency's stored knowledge cards
 - Works across multiple brains with the brain selector
 
 ### Public Brain Sharing
@@ -324,14 +328,20 @@ graph LR
 - Copy quality over time (before vs after scores)
 - Queries per day
 - Total docs, concepts, queries, scores
+- Token usage and estimated cost tracking
+
+### Auth
+- Email/password signup and login
+- Branded signup confirmation modal
+- Forgot password and reset password flow through Supabase Auth
 
 ---
 
 ## Local Setup
 
 ```bash
-git clone <your-repo>
-cd brandbrain
+git clone https://github.com/NikhilRaikwar/BrandBrain.git
+cd BrandBrain
 npm install
 npm run dev
 ```
@@ -388,6 +398,19 @@ Returns: `{ answer, sources: ["Doc title 1", ...], cost_usd }`
 
 Returns: `{ overall_score, breakdown, top_3_failures, rewrite, rewrite_score, cost_usd }`
 
+### POST /api/rewrite/save
+
+```json
+{
+  "brainId": "uuid",
+  "clientName": "Nike",
+  "title": "Rewrite for Nike",
+  "rewrite": "Improved copy..."
+}
+```
+
+Returns: `{ source_id, cards_created }`
+
 ---
 
 ## Hackathon Context
@@ -398,7 +421,7 @@ Returns: `{ overall_score, breakdown, top_3_failures, rewrite, rewrite_score, co
 |-----------|------|--------|
 | Kickoff | Mon 26 May | Done |
 | Product brief + MVP | Wed 28 May | Submitted |
-| Final Go Live | Fri 30 May | In progress |
+| Final Go Live | Sun 31 May | Done |
 
 Built for agencies, developers, AI engineers, and product builders who want their institutional knowledge to survive every team change and keep compounding instead of disappearing.
 
