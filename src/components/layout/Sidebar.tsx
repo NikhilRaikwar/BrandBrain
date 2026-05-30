@@ -29,7 +29,8 @@ export function Sidebar({ userEmail, open = false, onClose }: SidebarProps) {
   const handleLogout = async () => {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/");
+    router.refresh();
   };
 
   return (
