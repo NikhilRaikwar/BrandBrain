@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Save, Zap } from "lucide-react";
+import { Copy, Save, Share2, Zap } from "lucide-react";
 import { ScoreRing } from "./ScoreRing";
 
 type BreakdownItem = {
@@ -44,6 +44,7 @@ export function ScoreWorkbench({
   const [copy, setCopy] = useState("");
   const [result, setResult] = useState<ScoreResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [savingRewrite, setSavingRewrite] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const scoreRows = useMemo(
@@ -101,24 +102,41 @@ export function ScoreWorkbench({
   };
 
   const saveRewrite = async () => {
-    if (!result?.rewrite || !brainId) return;
-    const response = await fetch("/api/ingest", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        brainId,
-        sourceType: "campaign",
-        clientName,
-        title: `Rewrite for ${clientName}`,
-        content: result.rewrite,
-      }),
-    });
-    const payload = await response.json();
-    if (!response.ok) {
-      toast.error(payload.error ?? "Save failed");
+    if (!result?.rewrite || !brainId || savingRewrite) return;
+    setSavingRewrite(true);
+    try {
+      const response = await fetch("/api/rewrite/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brainId,
+          clientName,
+          title: `Rewrite for ${clientName}`,
+          rewrite: result.rewrite,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        toast.error(payload.error ?? "Save failed");
+        return;
+      }
+      toast.success("Saved to Brain");
+    } catch {
+      toast.error("Save failed");
+    } finally {
+      setSavingRewrite(false);
+    }
+  };
+
+  const shareRewrite = async () => {
+    if (!result?.rewrite) return;
+    const shareText = `BrandBrain rewrite for ${clientName}\n\n${result.rewrite}`;
+    if (navigator.share) {
+      await navigator.share({ title: "BrandBrain rewrite", text: shareText });
       return;
     }
-    toast.success("Saved to Brain");
+    await navigator.clipboard.writeText(shareText);
+    toast.success("Share text copied!");
   };
 
   const scoreAgain = async () => {
@@ -313,13 +331,17 @@ export function ScoreWorkbench({
                   <Copy className="h-4 w-4" />
                   Copy
                 </button>
+                <button type="button" onClick={shareRewrite} className="btn btn-outline">
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </button>
                 <button type="button" onClick={scoreAgain} className="btn btn-outline">
                   <Zap className="h-4 w-4" />
                   Score this rewrite
                 </button>
-                <button type="button" onClick={saveRewrite} className="btn btn-outline">
+                <button type="button" onClick={saveRewrite} className="btn btn-outline" disabled={savingRewrite}>
                   <Save className="h-4 w-4" />
-                  Save to Brain
+                  {savingRewrite ? "Saving..." : "Save to Brain"}
                 </button>
               </div>
             </div>
