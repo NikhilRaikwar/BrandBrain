@@ -14,14 +14,16 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const confirmed = window.confirm(
-      "Create your BrandBrain account with this email?"
-    );
-    if (!confirmed) return;
+    setConfirmOpen(true);
+  };
+
+  const createAccount = async () => {
     setLoading(true);
+    setConfirmOpen(false);
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signUp({
       email,
@@ -97,6 +99,34 @@ export default function SignupPage() {
           </form>
         </div>
       </div>
+
+      {confirmOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(26,21,16,0.58)] px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_24px_90px_rgba(26,21,16,0.28)]">
+            <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--green-bg)] text-xl">
+              🧠
+            </div>
+            <h2 className="font-display text-2xl font-bold text-[var(--ink)]">Create your BrandBrain?</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--ink3)]">
+              We&apos;ll create an account for{" "}
+              <span className="font-semibold text-[var(--ink)]">{email}</span> and set up your first agency brain.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="btn btn-outline justify-center"
+                onClick={() => setConfirmOpen(false)}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <Button type="button" onClick={createAccount} disabled={loading}>
+                {loading ? "Creating..." : "Create Account"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
