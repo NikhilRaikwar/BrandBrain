@@ -4,6 +4,7 @@
 > It turns scattered client knowledge into cited answers, Ogilvy-style copy judgment, and reusable workflows.
 
 Live site: [https://brandbrain-nu.vercel.app](https://brandbrain-nu.vercel.app)
+Demo video: [https://youtu.be/CaMF0aBYBp8](https://youtu.be/CaMF0aBYBp8)
 
 [![Built for OpenAI x Outskill Hackathon](https://img.shields.io/badge/OpenAI%20%C3%97%20Outskill-Hackathon%202026-green?style=flat-square)](https://outskill.com)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-black?style=flat-square)](https://nextjs.org)
