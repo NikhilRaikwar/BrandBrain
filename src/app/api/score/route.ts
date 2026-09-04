@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser, getUserBrainIds, buildKnowledgeContext } from "@/lib/brain";
 import { OGILVY_SCORER_PROMPT } from "@/lib/ogilvy-prompt";
 import { estimateCostUsd } from "@/lib/pricing";
-import { getOpenAI } from "@/lib/openai";
+import { getOpenRouter, OPENROUTER_MODEL } from "@/lib/openai";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +18,9 @@ function safeParseJson(value: string) {
 }
 
 async function scoreCopy(context: string, copy: string) {
-  const openai = getOpenAI();
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const openrouter = getOpenRouter();
+  const completion = await openrouter.chat.completions.create({
+    model: OPENROUTER_MODEL,
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: OGILVY_SCORER_PROMPT },

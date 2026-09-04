@@ -286,7 +286,7 @@ mindmap
 graph LR
     FE[Next.js 14 App Router<br/>Tailwind CSS<br/>Recharts] --> API[API Routes<br/>/api/ingest<br/>/api/query<br/>/api/score]
     API --> RW[/api/rewrite/save]
-    API --> OAI[OpenAI GPT-4o-mini]
+    API --> OAI[OpenRouter<br/>OpenAI GPT-4o-mini]
     API --> SB[(Supabase<br/>Auth + PostgreSQL<br/>Row Level Security)]
     FE --> SB
 
@@ -301,7 +301,7 @@ graph LR
 
 ### Knowledge Layer - Ingest
 - Paste campaigns, briefs, brand guides, or performance data
-- GPT-4o-mini extracts 3-7 structured knowledge cards per document
+- OpenRouter-hosted GPT-4o-mini extracts 3-7 structured knowledge cards per document
 - Each card: concept + summary + tags + client name
 - Multiple brains per user - one per client or project
 
@@ -352,7 +352,7 @@ Environment variables:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-OPENAI_API_KEY=
+OPENROUTER_API_KEY=
 NEXT_PUBLIC_SITE_URL=https://brandbrain-nu.vercel.app
 ```
 

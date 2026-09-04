@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { estimateCostUsd } from "@/lib/pricing";
-import { getOpenAI } from "@/lib/openai";
+import { getOpenRouter, OPENROUTER_MODEL } from "@/lib/openai";
 import { buildKnowledgeContext, getBrainByToken, getCurrentUser, getUserBrainIds } from "@/lib/brain";
 
 export const dynamic = "force-dynamic";
@@ -82,9 +82,9 @@ export async function POST(request: Request) {
       : { data: [] as Array<{ title: string }> };
     const sources = (rawSources ?? []).map((source) => source.title);
 
-    const openai = getOpenAI();
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const openrouter = getOpenRouter();
+    const completion = await openrouter.chat.completions.create({
+      model: OPENROUTER_MODEL,
       messages: [
         {
           role: "system",

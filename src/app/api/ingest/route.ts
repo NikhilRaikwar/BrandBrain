@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { createUserBrain, getCurrentUser, getUserBrainIds } from "@/lib/brain";
 import { estimateCostUsd } from "@/lib/pricing";
-import { getOpenAI } from "@/lib/openai";
+import { getOpenRouter, OPENROUTER_MODEL } from "@/lib/openai";
 
 export const dynamic = "force-dynamic";
 
@@ -66,9 +66,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: sourceError?.message ?? "Failed to save source" }, { status: 500 });
     }
 
-    const openai = getOpenAI();
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const openrouter = getOpenRouter();
+    const completion = await openrouter.chat.completions.create({
+      model: OPENROUTER_MODEL,
       messages: [
         {
           role: "system",
