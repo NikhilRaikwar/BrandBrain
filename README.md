@@ -70,7 +70,7 @@ flowchart TD
 
 ## Measured results
 
-Evaluation executed via `evals/retrieval/run.ts` on golden test dataset (`evals/retrieval/golden.jsonl`) across multiple client knowledge brains:
+Evaluation executed via `evals/retrieval/run.ts` on golden test dataset (`evals/retrieval/golden.jsonl`) measured on a 60-card corpus across distinct agency client domains (including out-of-domain abstention probes):
 
 | Metric | Baseline (Keyword Only) | Hybrid RAG (pgvector + RRF) | Delta |
 |---|---|---|---|
@@ -79,6 +79,8 @@ Evaluation executed via `evals/retrieval/run.ts` on golden test dataset (`evals/
 | **Citation Precision** | 3.1% | 15.1% | +11.9% |
 | **Abstention Accuracy** | 100.0% | 100.0% | +0.0% |
 | **Avg Latency** | 132 ms | 1302 ms | +1170 ms |
+
+> **Context note:** Benchmarked on an active 60-card knowledge base across multiple client domains (Nike, Noise, Zomato). Small/distinct-domain corpora naturally reward vector semantic clustering; as the corpus scales, RRF keyword fusion becomes even more vital for disambiguating brand acronyms and exact campaign names.
 
 ### Why hybrid, not pure vector?
 Pure vector search can overlook exact campaign codes, SKU identifiers, and specialized client acronyms that marketing teams rely on. Keyword search guarantees deterministic recall for specific client identifiers and exact phrasing, while vector cosine similarity captures semantic intent and thematic questions. Reciprocal Rank Fusion (RRF) combines the strengths of both without requiring fragile manual score calibration.
