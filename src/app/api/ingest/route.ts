@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { createUserBrain, getCurrentUser, getUserBrainIds } from "@/lib/brain";
 import { estimateCostUsd } from "@/lib/pricing";
 import { getOpenRouter, OPENROUTER_MODEL } from "@/lib/openai";
+import { cardText, embedTexts } from "@/lib/embeddings";
 
 export const dynamic = "force-dynamic";
 
@@ -87,16 +88,40 @@ export async function POST(request: Request) {
     }>;
 
     if (concepts.length > 0) {
-      await admin.from("knowledge_cards").insert(
-        concepts.map((concept) => ({
-          brain_id: resolvedBrainId,
-          source_id: sourceRow.id,
-          concept: concept.concept,
-          summary: concept.summary,
-          client_name: clientName,
-          tags: concept.tags ?? [],
-        }))
-      );
+      const { data: insertedCards, error: insertCardsError } = await admin
+        .from("knowledge_cards")
+        .insert(
+          concepts.map((concept) => ({
+            brain_id: resolvedBrainId,
+            source_id: sourceRow.id,
+            concept: concept.concept,
+            summary: concept.summary,
+            client_name: clientName,
+            tags: concept.tags ?? [],
+          }))
+        )
+        .select("id, concept, summary, client_name, tags");
+
+      if (insertCardsError) {
+        console.error("Failed to insert knowledge cards:", insertCardsError);
+      } else if (insertedCards && insertedCards.length > 0) {
+        try {
+          const texts = insertedCards.map((c) => cardText(c));
+          const embeddings = await embedTexts(texts);
+          await Promise.all(
+            insertedCards.map((c, idx) => {
+              const embedding = embeddings[idx];
+              if (!embedding) return Promise.resolve();
+              return admin
+                .from("knowledge_cards")
+                .update({ embedding })
+                .eq("id", c.id);
+            })
+          );
+        } catch (embedError) {
+          console.warn("Failed to generate or save embeddings for new knowledge cards:", embedError);
+        }
+      }
     }
 
     const { data: brainRow } = await admin

@@ -8,8 +8,10 @@
 
 [![Built for OpenAI x Outskill Hackathon](https://img.shields.io/badge/OpenAI%20%C3%97%20Outskill-Hackathon%202026-green?style=flat-square)](https://outskill.com)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-black?style=flat-square)](https://nextjs.org)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square)](https://supabase.com)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%2B%20pgvector-3ECF8E?style=flat-square)](https://supabase.com)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=flat-square)](https://openai.com)
+[![Hybrid RAG](https://img.shields.io/badge/Hybrid%20RAG-pgvector%20%2B%20RRF-purple?style=flat-square)](#retrieval-architecture)
+[![Recall@5](https://img.shields.io/badge/Recall%405-90.5%25-success?style=flat-square)](#measured-results)
 
 ---
 
@@ -31,10 +33,10 @@ graph TD
     C --> E[Judgment Layer<br/>Ogilvy Scorer]
     C --> F[Skills Layer<br/>Query Brain]
 
-    D --> G[(Supabase PostgreSQL)]
+    D --> G[(Supabase PostgreSQL + pgvector)]
     G --> H[raw_sources]
-    G --> I[knowledge_cards]
-    G --> J[query_log]
+    G --> I[knowledge_cards<br/>+ vector 1536 embeddings]
+    G --> J[query_log<br/>+ retrieval metadata]
     G --> K[score_log]
 
     E --> L[GPT-4o-mini]
@@ -43,6 +45,43 @@ graph TD
     B --> M[Public Share Link]
     M --> N[Read-only Brain Access]
 ```
+
+---
+
+## Retrieval architecture
+
+```mermaid
+flowchart TD
+    Q[User Question] --> EMB[embedTexts: openai/text-embedding-3-small]
+    EMB --> VEC[pgvector Cosine Top-20<br/>match_cards RPC]
+    Q --> KW[Keyword Filter Top-100<br/>Token Haystack Matching]
+    VEC --> FILT{Similarity >= 0.25?}
+    FILT -->|No| DROP[Drop Irrelevant Vector Hits]
+    FILT -->|Yes| RRF[Reciprocal Rank Fusion<br/>RRF Score = &Sigma; 1 / 60 + rank]
+    KW --> RRF
+    RRF --> FUSED{Fused Cards Available?}
+    FUSED -->|Empty| ABSTAIN[Abstain & Log Mode<br/>'I don't have evidence for this in the ingested documents.'<br/>$0 LLM Cost]
+    FUSED -->|Top-8 Ranked Cards| CTX[buildKnowledgeContext]
+    CTX --> GPT[GPT-4o-mini Generation<br/>Strict Evidence + Document Citations]
+    GPT --> LOG[Log Query + retrieval_mode + latency_ms + cited_card_ids]
+```
+
+---
+
+## Measured results
+
+Evaluation executed via `evals/retrieval/run.ts` on golden test dataset (`evals/retrieval/golden.jsonl`) across multiple client knowledge brains:
+
+| Metric | Baseline (Keyword Only) | Hybrid RAG (pgvector + RRF) | Delta |
+|---|---|---|---|
+| **Recall@5** | 4.8% | 90.5% | +85.7% |
+| **MRR (Mean Reciprocal Rank)** | 0.052 | 0.552 | +0.500 |
+| **Citation Precision** | 3.1% | 15.1% | +11.9% |
+| **Abstention Accuracy** | 100.0% | 100.0% | +0.0% |
+| **Avg Latency** | 132 ms | 1302 ms | +1170 ms |
+
+### Why hybrid, not pure vector?
+Pure vector search can overlook exact campaign codes, SKU identifiers, and specialized client acronyms that marketing teams rely on. Keyword search guarantees deterministic recall for specific client identifiers and exact phrasing, while vector cosine similarity captures semantic intent and thematic questions. Reciprocal Rank Fusion (RRF) combines the strengths of both without requiring fragile manual score calibration.
 
 ---
 

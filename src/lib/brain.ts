@@ -64,11 +64,11 @@ export async function getBrainByToken(token: string) {
 }
 
 export function buildKnowledgeContext(
-  cards: Array<{ concept: string; summary: string; client_name: string; tags?: string[]; title?: string }>
+  cards: Array<{ concept: string; summary: string; client_name: string; tags?: string[] | null; title?: string }>
 ) {
   return cards
     .map((card, index) => {
-      const tags = card.tags?.length ? ` | Tags: ${card.tags.join(", ")}` : "";
+      const tags = card.tags && card.tags.length > 0 ? ` | Tags: ${card.tags.join(", ")}` : "";
       return `${index + 1}. [${card.client_name}] ${card.concept}: ${card.summary}${tags}`;
     })
     .join("\n");

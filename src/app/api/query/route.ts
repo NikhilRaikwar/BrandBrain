@@ -3,10 +3,13 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { estimateCostUsd } from "@/lib/pricing";
 import { getOpenRouter, OPENROUTER_MODEL } from "@/lib/openai";
 import { buildKnowledgeContext, getBrainByToken, getCurrentUser, getUserBrainIds } from "@/lib/brain";
+import { keywordFilter, reciprocalRankFusion, RetrievedCard } from "@/lib/retrieval";
+import { embedTexts } from "@/lib/embeddings";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const t0 = Date.now();
   try {
     const body = await request.json();
     const question = String(body.question ?? "").trim();
@@ -42,40 +45,76 @@ export async function POST(request: Request) {
       }
     }
 
-    const { data: cards } = await admin
+    // a. Embed question
+    let vectorHits: RetrievedCard[] = [];
+    try {
+      const qEmbs = await embedTexts([question]);
+      if (qEmbs.length > 0 && qEmbs[0].length > 0) {
+        // b. pgvector match_cards
+        const { data: rpcHits, error: rpcError } = await admin.rpc("match_cards", {
+          p_brain_id: resolvedBrainId,
+          p_embedding: qEmbs[0],
+          p_limit: 20,
+        });
+
+        if (!rpcError && rpcHits) {
+          vectorHits = (rpcHits as RetrievedCard[]).filter(
+            (hit) => hit.similarity === undefined || hit.similarity >= 0.25
+          );
+        } else if (rpcError) {
+          console.warn("match_cards RPC error:", rpcError);
+        }
+      }
+    } catch (embErr) {
+      console.warn("Question embedding error:", embErr);
+    }
+
+    // c. Fetch up to 100 cards for keyword filtering
+    const { data: allCards } = await admin
       .from("knowledge_cards")
-      .select("*")
+      .select("id, concept, summary, client_name, tags, source_id")
       .eq("brain_id", resolvedBrainId)
       .order("created_at", { ascending: false })
-      .limit(25);
+      .limit(100);
 
-    const tokens = Array.from(
-      new Set(
-        (question.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter(
-          (token) => token.length > 2 && !["what", "when", "where", "why", "how", "the", "and", "for", "with", "this", "that", "from", "into", "about", "your", "what's", "whats", "is", "are", "was", "were"].includes(token)
-        )
-      )
-    );
+    // d. Keyword filter
+    const kwHits = keywordFilter(allCards ?? [], question);
 
-    const matchingCards =
-      cards?.filter((card) => {
-        const haystack = [
-          card.concept,
-          card.summary,
-          card.client_name,
-          ...(card.tags ?? []),
-        ]
-          .join(" ")
-          .toLowerCase();
-        return tokens.length === 0
-          ? true
-          : tokens.some((token) => haystack.includes(token));
-      }) ?? [];
+    // e. RRF fuse -> top 8
+    const fused = reciprocalRankFusion(vectorHits, kwHits, 60);
+    const top8 = fused.slice(0, 8);
 
-    const usableCards = matchingCards.length > 0 ? matchingCards : cards ?? [];
-    const context = buildKnowledgeContext(usableCards);
+    // f. Abstain if no cards found
+    if (top8.length === 0) {
+      const latencyMs = Date.now() - t0;
+      await admin.from("query_log").insert({
+        brain_id: resolvedBrainId,
+        question,
+        answer: "I don't have evidence for this in the ingested documents.",
+        sources_used: [],
+        tokens_used: 0,
+        cost_usd: 0,
+        retrieval_mode: "abstain",
+        latency_ms: latencyMs,
+        cited_card_ids: [],
+      });
+
+      return NextResponse.json(
+        {
+          answer: "I don't have evidence for this in the ingested documents.",
+          sources: [],
+          abstained: true,
+          cost_usd: 0,
+          public: isPublicRequest,
+        },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    // g. Build knowledge context and generate completion
+    const context = buildKnowledgeContext(top8);
     const sourceIds = Array.from(
-      new Set(usableCards.map((card) => card.source_id).filter(Boolean))
+      new Set(top8.map((card) => card.source_id).filter(Boolean))
     );
     const { data: rawSources } = sourceIds.length
       ? await admin.from("raw_sources").select("title").in("id", sourceIds)
@@ -98,11 +137,13 @@ export async function POST(request: Request) {
       ],
     });
 
-    const answer = completion.choices[0]?.message?.content?.trim() ||
+    const answer =
+      completion.choices[0]?.message?.content?.trim() ||
       "I could not generate an answer from the provided knowledge cards.";
     const promptTokens = completion.usage?.prompt_tokens ?? 0;
     const completionTokens = completion.usage?.completion_tokens ?? 0;
     const costUsd = estimateCostUsd(promptTokens, completionTokens);
+    const latencyMs = Date.now() - t0;
 
     await admin.from("query_log").insert({
       brain_id: resolvedBrainId,
@@ -111,16 +152,30 @@ export async function POST(request: Request) {
       sources_used: sources,
       tokens_used: promptTokens + completionTokens,
       cost_usd: costUsd,
+      retrieval_mode: "hybrid",
+      latency_ms: latencyMs,
+      cited_card_ids: top8.map((c) => c.id),
     });
 
-    const { data: brainRow } = await admin.from("brains").select("queries_answered").eq("id", resolvedBrainId).maybeSingle();
+    const { data: brainRow } = await admin
+      .from("brains")
+      .select("queries_answered")
+      .eq("id", resolvedBrainId)
+      .maybeSingle();
+
     await admin
       .from("brains")
       .update({ queries_answered: (brainRow?.queries_answered ?? 0) + 1 })
       .eq("id", resolvedBrainId);
 
     return NextResponse.json(
-      { answer, sources, cost_usd: costUsd, public: isPublicRequest },
+      {
+        answer,
+        sources,
+        cost_usd: costUsd,
+        public: isPublicRequest,
+        abstained: false,
+      },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
